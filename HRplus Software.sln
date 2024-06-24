@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApp", "WebApp\WebApp.csp
 EndProject
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "Database", "Database\Database.sqlproj", "{FDCCE94E-DD10-41E7-B6EB-69F2BBF2A90D}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "AIAgent", "AIAgent\AIAgent.pyproj", "{824A6FCE-25BF-43A8-800E-40894E15CAE1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +25,8 @@ Global
 		{FDCCE94E-DD10-41E7-B6EB-69F2BBF2A90D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FDCCE94E-DD10-41E7-B6EB-69F2BBF2A90D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FDCCE94E-DD10-41E7-B6EB-69F2BBF2A90D}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{824A6FCE-25BF-43A8-800E-40894E15CAE1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{824A6FCE-25BF-43A8-800E-40894E15CAE1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
