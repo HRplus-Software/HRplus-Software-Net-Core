@@ -1,10 +1,242 @@
 ﻿@page
 @model IndexModel
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+@Html.AntiForgeryToken()
 @{
     ViewData["Title"] = "Home page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@(Html.Kendo()
+.AppBar()
+.Name("ToolBar")
+.ThemeColor(AppBarThemeColor.Inherit)
+.Items(items =>
+{
+    @* 
+        This template code adds a button to the toolbar with a menu icon. 
+        When the button is clicked, it triggers the "toggleDrawer" function.
+    *@
+    items.Add().Template(Html.Kendo().Template().AddComponent(x => x.Button()
+        .Name("menu")
+        .HtmlAttributes(new { type = "button" })
+        .Icon("menu")
+        .Events(ev => ev.Click("toggleDrawer"))
+        .Content(""))).Type(AppBarItemType.ContentItem);
+    @* 
+        This template code adds a toolbar item to the toolbar with a custom heading.
+        The heading is styled with a left margin of 20 pixels.
+    *@
+    items.Add().Template(Html.Kendo().Template().AddHtml("<h4 style='margin-left: 20px;'>HRplus</h4>")).Type(AppBarItemType.ContentItem);
+    items.Add().Type(AppBarItemType.Spacer);
+    @*
+     * Adds a ComboBox template to the toolbar items.
+     * The ComboBox allows users to search for site contents.
+     * 
+     * @param name The name of the ComboBox.
+     * @param dataTextField The name of the field to be displayed as the ComboBox text.
+     * @param dataValueField The name of the field to be used as the ComboBox value.
+     * @param icon The icon to be displayed as the prefix option of the ComboBox.
+     * @param style The CSS style for the ComboBox.
+     * @param placeholder The placeholder text to be displayed in the ComboBox.
+     * @param highlightFirst Specifies whether the first item should be highlighted.
+     * @param autoBind Specifies whether the ComboBox should be automatically bound.
+     * @param template The template for rendering each item in the ComboBox.
+     * @param minLength The minimum number of characters required to perform a search.
+     * @param filterType The type of filtering to be applied to the ComboBox.
+     * @param onChange The event handler for the change event of the ComboBox.
+     * @param dataSource The data source for the ComboBox.
+    *@
+    items.Add().Template(Html.Kendo().Template().AddComponent(x => x.ComboBox()
+        .Name("siteobjectsearch")
+        .DataTextField("SiteObjectName")
+        .DataValueField("Path")
+        .PrefixOptions(prefix => prefix.Icon("map-marker-target"))
+        .HtmlAttributes(new { style = "width:35vw;" })
+        .Placeholder("Search For Site Contents")
+        .HighlightFirst(false)
+        .AutoBind(true)
+        .Template("<span class='#: data.Icon #'></span><span>#: data.SiteObjectName #</span>")
+        .MinLength(3)
+        .Filter(FilterType.Contains)
+        .Events(e =>
+        {
+            e.Change("onSiteObjectChange");
+        })
+        .DataSource(ds => ds
+            .Custom()
+            .Group(g => g.Add("TypeName", typeof(string)))
+            .Transport(transport => transport.Read(read => read.Url("/Index?handler=SiteObjects").Data("siteObjectDataFunction")))
+            .ServerFiltering(true)).Deferred()
+        )).Type(AppBarItemType.ContentItem);
+
+    items.Add().Type(AppBarItemType.Spacer);
+    @* 
+        This template code adds an Avatar component to the toolbar items.
+        The Avatar component displays a user icon with a solid fill mode.
+        The Avatar is styled with a rounded shape and a primary theme color.
+    *@
+    items.Add().Template(Html.Kendo().Template().AddComponent(x => x.Avatar()
+        .Name("user")
+        .Type(AvatarType.Icon)
+        .Rounded(Rounded.Full)
+        .Icon("user")
+        .FillMode(AvatarFillMode.Solid)
+        .ThemeColor(ThemeColor.Primary))).Type(AppBarItemType.ContentItem);
+}).Deferred())
+
+@(Html.Kendo().Drawer()
+.Name("drawer")
+.Mode("push")
+.Expanded(false)
+.Mini(true)
+.Position("left")
+.MinHeight(330)
+.SwipeToOpen(false)
+.Events(x => x.ItemClick("onItemClick"))
+.Content(@"
+<div id='TopAnchor'style='position: fixed; top: 0px;'></div>
+<div id='kendotabstripholder'></div>
+<div id='BottomAnchor' style='position:fixed;bottom: 0px;'>_</div>")
+.Template(@"
+<ul>
+<li data-role='drawer-item' title='Clients' id='CMS_Clients_ClientsGrid'>
+    <span class='k-icon k-font-icon k-i-inbox'></span>
+    <span class='k-item-text'>Clients</span>
+</li>
+<li data-role='drawer-item' title='Work Item Setup' id='DevOps_WorkItemCodes_WorkItemCodesGrid'>
+    <span class='k-icon k-font-icon k-i-notification k-i-bell'></span>
+    <span class='k-item-text'>Work Item Codes</span>
+</li>
+<li data-role='drawer-item' title='Work Items' id='DevOps_WorkItems_WorkItemsGrid'>
+    <span class='k-icon k-font-icon k-i-notification k-i-bell'></span>
+    <span class='k-item-text'>Work Item Codes</span>
+</li>
+<li data-role='drawer-separator'></li>
+<li data-role='drawer-item' title='Setup' id='Setup_Setup'>
+    <span class='k-icon k-font-icon k-i-gear'></span>
+    <span class='k-item-text'>Setup</span>
+</li>
+</ul>")
+.Deferred())
+
+
+<script type="text/javascript" nonce="kendoInlineScript">
+    var _iframeHeight;
+    var _tabStrip;
+    var _tabStripTest;
+    var _watch;
+
+    /// <summary>
+    /// Generates a forgery token for anti-forgery protection.
+    /// </summary>
+    /// <returns>The forgery token object containing the __RequestVerificationToken.</returns>
+    function forgeryToken() {
+        return {
+            __RequestVerificationToken: kendo.antiForgeryTokens().__RequestVerificationToken
+        }
+    }
+
+    /// <summary>
+    /// Generates the data for the site object ComboBox based on the filter value.
+    /// </summary>
+    /// <param name="e">The event arguments containing the filter value.</param>
+    /// <returns>The data object containing the filter value and the anti-forgery token.</returns>
+    function siteObjectDataFunction(e) {
+        var filterValue = '';
+        if (e.filter.filters[0]) {
+            filterValue = e.filter.filters[0].value;
+        }
+
+        return {
+            __RequestVerificationToken: kendo.antiForgeryTokens().__RequestVerificationToken,
+            filterValue: filterValue
+        };
+    }
+
+    /// <summary>
+    /// Event handler for the change event of the site object ComboBox.
+    /// </summary>
+    /// <param name="e">The event arguments.</param>
+    function onSiteObjectChange(e) {
+        console.log(this.value());
+        if (this) {
+            var page = this.value();
+            if (this.value()) {
+                const urlPaths = page.split("?");
+                const urlParams = urlPaths[1].split("|");
+                openTab(urlPaths[0], this.text(), urlParams[0], urlParams[1]);
+            }
+        }
+    }
+
+
+    $(function () {
+        //First Calculate the height of the available container for proper resizing of iframes
+        var topanchor = document.getElementById('TopAnchor');
+        var bottomanchor = document.getElementById('BottomAnchor');
+        const x1 = topanchor.offsetTop;
+        const x2 = bottomanchor.offsetTop;
+        _iframeHeight = x2 - x1 - 104;
+
+        //Register the instance of the Main Page Tab Strip
+        _tabStrip = $("#kendotabstripholder").kendoTabStrip({
+            //activate: onActivate,
+            collapsible: true
+        }).data("kendoTabStrip");
+    });
+
+    function toggleDrawer() {
+        var drawerInstance = $("#drawer").data().kendoDrawer;
+        var drawerContainer = drawerInstance.drawerContainer;
+        if (drawerContainer.hasClass("k-drawer-expanded")) {
+            drawerInstance.hide();
+        }
+        else {
+            drawerInstance.show();
+        }
+    }
+
+    function onItemClick(e) {
+        openTab(e.item[0].id, e.item[0].title, "", "");
+    }
+
+    /// <summary>
+    /// Opens a new tab in the tab strip with the specified page, title, parameters, and id.
+    /// </summary>
+    /// <param name="page">The page to open in the tab.</param>
+    /// <param name="title">The title of the tab.</param>
+    /// <param name="parameters">The parameters for the page.</param>
+    /// <param name="id">indetity values passed into the paramaetes</param>
+    function openTab(page, title, parameters, id) {
+        var pageMap = page + id;
+        var tabStripItem = $(`#container${pageMap}`).parent().attr('id');
+        if (tabStripItem != null) {
+            tabStripItem = tabStripItem.replaceAll("-", "-tab-");
+            var tabToActivate = $(`#${tabStripItem}`);
+            _tabStrip.activateTab(tabToActivate);
+        }
+        else {
+            var itemcount = _tabStrip.items().length + 1;
+
+            var tabStripId = `kendotabstripholder-tab-${itemcount}`;
+            _tabStrip.append([{
+                text: title + "<span id='" + pageMap + "'></span>&nbsp;&nbsp;<span class='k-icon k-font-icon k-button-icon k-i-x tab-strip-close'></span>",
+                encoded: false,
+                content: `<div id='container${pageMap}' style ='margin:0px;padding:0px;overflow:hidden;height: ${_iframeHeight}px;'></div>`
+            }]);
+            var tabToActivate = $(`#${tabStripId}`);
+            _tabStrip.activateTab(tabToActivate);
+            var path = page.replaceAll("_", "/") + "?" + parameters;
+            $(`#container${pageMap}`).append(`<iframe src='${path}' frameborder='0' style='display: block;background: #FFF;border: none;height: ${_iframeHeight}px;width: 100%;'></iframe>`);
+        }
+    }
+
+    $("body").on("click", ".tab-strip-close", function (e) {
+        var tab = $(e.currentTarget).closest("li");
+        _tabStrip.remove(tab);
+        _tabStrip.select(_tabStrip.items().length - 1);
+    })
+
+    @Html.Kendo().DeferredScripts(false)
+    @Html.Kendo().DeferredScriptsFor("siteobjectsearch", false)
+</script>
